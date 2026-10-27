@@ -1,0 +1,15 @@
+raw/*
+!raw/.gitkeep
+reference/*
+!reference/.gitkeep
+intermediate/*
+!intermediate/.gitkeep
+published/*
+!published/.gitkeep
+quarantine/*
+!quarantine/.gitkeep
+registry/*
+!registry/.gitkeep
+cache/*
+!cache/.gitkeep
+

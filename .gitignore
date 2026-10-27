@@ -1,0 +1,79 @@
+# Alcance de este repositorio
+#
+# Este Git contiene el flujo completo: ingesta, procesamiento, referencias,
+# publicacion de insumos y aplicacion Shiny. Los datos quedan fuera.
+
+# Codigo historico retirado: se conserva localmente como evidencia, pero no
+# forma parte del runtime limpio que se desplegara en Cloudera.
+**/en_desuso/
+
+# Configuracion historica reemplazada por config/base.yml y environments/.
+/config/pipeline.yml
+
+# Datos y artefactos binarios. La politica detallada y los .gitkeep viven en
+# data/.gitignore. Estas extensiones agregan una segunda barrera si un archivo
+# de datos aparece accidentalmente fuera de data/.
+*.parquet
+*.rds
+*.rda
+*.RData
+*.fst
+*.feather
+*.arrow
+*.csv
+*.tsv
+*.gpkg
+*.shp
+*.shx
+*.dbf
+*.prj
+*.cpg
+*.qmd.html
+
+# Credenciales, secretos y configuracion privada.
+.Renviron
+.Renviron.*
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+/config/secrets*.yml
+/config/credentials*.yml
+/.aws/
+
+# Estado local de R y RStudio.
+.Rproj.user/
+.Rhistory
+.RDataTmp
+.Ruserdata
+.Rapp.history
+
+# Librerias y caches de renv. El lockfile y renv/activate.R, si se crean en
+# T02, deben quedar versionados.
+/renv/library/
+/renv/staging/
+/renv/local/
+/renv/python/
+
+# Caches, reportes y temporales de herramientas.
+*.log
+*.out
+*.err
+*.tmp
+*.temp
+*.bak
+*~
+.DS_Store
+Thumbs.db
+.quarto/
+_freeze/
+*_cache/
+*_files/
+
+# Cobertura y resultados temporales de pruebas.
+.covr/
+coverage/
+tests/testthat/_snaps.new/

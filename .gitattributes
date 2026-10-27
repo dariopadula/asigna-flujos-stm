@@ -1,0 +1,25 @@
+* text=auto
+
+# Cloudera ejecutara sobre Linux: scripts y configuracion deben conservar LF.
+*.R text eol=lf
+*.Rmd text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+*.txt text eol=lf
+
+# Formatos que nunca deben recibir conversion de fin de linea.
+*.rds binary
+*.RData binary
+*.parquet binary
+*.fst binary
+*.gpkg binary
+*.shp binary
+*.shx binary
+*.dbf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.zip binary

@@ -1,0 +1,110 @@
+reference_snapshot:
+  id: "referencias_202605_corte_20260520"
+  cutoff_date: "2026-05-20"
+  year_month: 202605
+  subsystem_codes: [1, 2, 3, 4]
+  metric_crs: 32721
+
+paths:
+  variant_geometries: data/reference/v_uptu_lsv_hive.csv
+  variant_stops:
+    - data/reference/v_uptu_paradas_hive0.csv
+    - data/reference/v_uptu_paradas_hive1.csv
+  line_catalog: data/reference/lineas_metro.csv
+  intermediate_references: data/intermediate/referencias
+  canonical_registry: data/registry/canonica
+  canonical_bootstrap_source: ../data/intermediate/shiny_hibrido_202605/base
+
+expected_initial:
+  buildable_variants: 3218
+  universe_stops: 221336
+  canonical_corridors: 4189
+  canonical_points: 63647
+
+canonical_constructor:
+  version: "canonica_202605_v1"
+  sources:
+    staged_root: data/reference/constructor_canonica
+    urban_streets: data/reference/constructor_canonica/vias/v_mdg_vias.shp
+    historical_stops: data/reference/constructor_canonica/paradas/stm_paradas_por_variantes_hist.csv
+    montevideo_boundary: data/reference/constructor_canonica/montevideo/sig_municipios.shp
+    osm_gpkg: data/reference/constructor_canonica/osm/uruguay-2026-10-05.gpkg
+  migration_origins:
+    urban_streets: ../../AsignaFlujoSTM/SHP/v_mdg_vias/v_mdg_vias.shp
+    historical_stops: ../../AsignaFlujoSTM/SHP/CSV/stm_paradas_por_variantes_hist/stm_paradas_por_variantes_hist.csv
+    montevideo_boundary: ../../AsignaFlujoSTM/SHP/sig_municipios/sig_municipios.shp
+    osm_gpkg: ../data/raw/osm/uruguay-2026-10-05.gpkg
+  outputs:
+    rebuild_root: data/intermediate/referencias/reconstruccion_canonica_202605
+  urban:
+    source_crs: 4326
+    street_sample_distance_m: 75
+    street_grid_cellsize_max_m: 500
+    street_grid_initial_parts: 10
+    streets_without_direction: [2354]
+  exterior:
+    variant_sample_distance_m: 50
+    canonical_distance_m: 75
+    osm_buffer_m: 250
+    osm_tile_m: 20000
+    corridor_component_distance_m: 45
+    corridor_p95_max_m: 40
+
+canonical_variants:
+  version: "variantes_202605_v1"
+  canonical_network_version: "canonica_202605_v1"
+  progress_every: 100
+  outputs:
+    candidate_root: data/intermediate/referencias/variantes_canonicas
+    registry_root: data/registry/variantes_canonicas
+  oracle:
+    root: ../data/intermediate/shiny_hibrido_202605/base
+    expected_sequence_positions: 1069719
+  projection:
+    sample_distance_m: 50
+    accept_distance_m: 60
+    review_distance_m: 100
+    smooth_short_runs_max: 2
+  stops:
+    accept_distance_m: 75
+    review_distance_m: 150
+
+regional_registry:
+  version: "regiones_202605_v1"
+  canonical_network_version: "canonica_202605_v1"
+  reference_snapshot: "referencias_202605_corte_20260520"
+  variant_registry_version: "variantes_202605_v1"
+  output_root: data/registry/regiones
+  source_crs_departments: 32721
+  target_departments:
+    - MONTEVIDEO
+    - CANELONES
+    - SAN JOSE
+  sources:
+    barrios: ../../AsignaFlujoSTM/SHP/ine_barrios_mvd/ine_barrios_mvd.shp
+    ccz: ../../AsignaFlujoSTM/SHP/sig_comunales/sig_comunales.shp
+    municipios: data/reference/constructor_canonica/montevideo/sig_municipios.shp
+    departamentos: ../../AsignaFlujoSTM/SHP/ine_depto/ine_depto.shp
+
+presentation_registry:
+  version: "presentacion_202605_v1"
+  canonical_network_version: "canonica_202605_v1"
+  reference_snapshot: "referencias_202605_corte_20260520"
+  variant_registry_version: "variantes_202605_v1"
+  output_root: data/registry/presentacion
+  map_offset_m: 10
+  streets_without_direction: [2354]
+  sources:
+    # Fuente de migracion de la convencion cardinal urbana validada.
+    # No se consume en la aplicacion ni depende de una OD diaria.
+    urban_orientation: ../data/intermediate/base_canonica/puntos_calles_canonicas.rds
+  expected_initial:
+    posiciones: 1069719
+    posiciones_urbanas: 613392
+    posiciones_urbanas_con_nombre: 613392
+    corredores_exteriores_sin_nombre: 594
+    posiciones_exteriores_sin_nombre: 16397
+    posiciones_sin_sentido: 3359
+    posiciones_indeterminadas: 36
+    identidades_presentacion: 61273
+

@@ -1,0 +1,14 @@
+environment: local
+
+storage:
+  backend: local
+  source_root: data/raw
+  reference_root: data/reference
+  registry_root: data/registry
+  published_root: data/published
+  quarantine_root: data/quarantine
+
+execution:
+  work_root: data/intermediate
+  cache_root: data/cache
+

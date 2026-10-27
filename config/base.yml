@@ -1,0 +1,86 @@
+project:
+  timezone: America/Montevideo
+  metric_crs: 32721
+
+sources:
+  od:
+    format: csv_monthly
+    path_template: stm_od_{yyyymm}.csv
+  line_catalog: lineas_metro.csv
+  variant_geometries: v_uptu_lsv_hive.csv
+  variant_stops:
+    - v_uptu_paradas_hive0.csv
+    - v_uptu_paradas_hive1.csv
+
+ingestion:
+  required_columns:
+    - fecha_evento_subida
+    - fecha_evento_bajada
+    - linea_codigo_subida
+    - sevar_codigo_subida
+    - codigo_parada_subida
+    - codigo_parada_bajada
+    - cantidad_pasajeros
+    - id_recorrido_global
+    - valid
+    - global
+    - anio_mes
+  key_columns:
+    - fecha_evento_subida
+    - linea_codigo_subida
+    - sevar_codigo_subida
+    - codigo_parada_subida
+    - codigo_parada_bajada
+    - cantidad_pasajeros
+
+operational_od:
+  columns:
+    - numero_evento_subida
+    - linea_codigo_subida
+    - sevar_codigo_subida
+    - nro_frecuencia_subida
+    - numero_tarjeta_mifare
+    - secuencia_multitramo
+    - ordinal_de_tramo
+    - cantidad_pasajeros
+    - fecha_evento_subida
+    - codigo_parada_subida
+    - numero_evento_real_subida
+    - fecha_evento_bajada
+    - codigo_parada_bajada
+    - numero_evento_real_bajada
+    - linea_codigo_bajada
+    - sevar_codigo_bajada
+    - nro_frecuencia_bajada
+    - valid
+    - cod_empresa
+    - id_recorrido_global
+    - extrapolation
+    - global
+
+variant_diagnosis:
+  subsystem_codes: [1, 2, 3, 4]
+
+variant_similarity:
+  review_distance_m: 150
+  weak_distance_m: 300
+
+daily_variant_usage:
+  canonical_network_version: canonica_202605_v1
+  reference_snapshot: referencias_202605_corte_20260520
+  canonical_registry_path: variantes_canonicas
+
+stop_recovery:
+  max_distance_m: 500
+
+schedules:
+  routes_per_batch: 500
+  max_edge_speed_kmh: 100
+  max_anchor_adjustment_s: 1800
+
+publication:
+  regional_registry_path: regiones
+  canonical_network_path: canonica
+  regional_registry_version: regiones_202605_v1
+  presentation_registry_version: presentacion_202605_v1
+

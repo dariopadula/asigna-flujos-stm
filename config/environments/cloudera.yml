@@ -1,0 +1,17 @@
+environment: cloudera
+
+# Las URI se inyectan como variables del job. Este archivo no contiene
+# credenciales, nombres de buckets ni rutas propias de una computadora.
+storage:
+  backend: s3
+  source_root: ${ASIGNA_FLUJOS_SOURCE_ROOT}
+  reference_root: ${ASIGNA_FLUJOS_REFERENCE_ROOT}
+  registry_root: ${ASIGNA_FLUJOS_REGISTRY_ROOT}
+  published_root: ${ASIGNA_FLUJOS_PUBLISHED_ROOT}
+  quarantine_root: ${ASIGNA_FLUJOS_QUARANTINE_ROOT}
+
+# Trabajo y cache deben apuntar al filesystem efimero/local del job.
+execution:
+  work_root: ${ASIGNA_FLUJOS_WORK_ROOT}
+  cache_root: ${ASIGNA_FLUJOS_CACHE_ROOT}
+
