@@ -5,6 +5,18 @@
 Fuentes transaccionales originales, sin modificar. La matriz OD mensual
 `matriz_od_202605` debe copiarse aquí conservando su formato y nombre de origen.
 
+## `ingested/`
+
+Fuentes persistentes ya normalizadas para el pipeline. La OD se almacena como
+un dataset Parquet particionado por fecha bajo
+`ingested/od/fecha=AAAA-MM-DD/`. Cada fecha puede contener una o varias partes
+Parquet y su manifiesto de validacion.
+
+Esta capa se genera a partir del CSV mensual original o se promueve desde una
+fuente Parquet diaria validada. Debe conservar el mismo contrato logico en
+local y S3; no es una carpeta temporal y no debe confundirse con
+`intermediate/`.
+
 ## `reference/`
 
 Fuentes maestras o geográficas necesarias para interpretar la OD. Aquí deben
@@ -65,6 +77,6 @@ Materializaciones locales reconstruibles, incluidas las cachés de Shiny y de
 transferencias remotas. En Cloudera debe apuntar al disco local o efímero del
 servicio, no al repositorio.
 
-Los contenidos de estas siete carpetas están excluidos de Git; sólo se
+Los contenidos de estas ocho carpetas están excluidos de Git; sólo se
 versiona su estructura mediante `.gitkeep`.
 

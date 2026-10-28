@@ -1,5 +1,10 @@
 raw/*
 !raw/.gitkeep
+ingested/*
+!ingested/.gitkeep
+!ingested/od/
+ingested/od/*
+!ingested/od/.gitkeep
 reference/*
 !reference/.gitkeep
 intermediate/*

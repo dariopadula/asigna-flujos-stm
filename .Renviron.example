@@ -7,6 +7,10 @@ ASIGNA_FLUJOS_S3_CONNECTION="S3 Object Store"
 ASIGNA_FLUJOS_S3_BUCKET=REEMPLAZAR_BUCKET
 ASIGNA_FLUJOS_S3_PREFIX=REEMPLAZAR_PREFIJO/data
 
+# Evita que reticulate descargue un Python aislado sin las librerias de CML.
+# Confirmar la ruta con `which python3` en cada runtime de Cloudera.
+RETICULATE_PYTHON=/usr/local/bin/python3
+
 # Raices requeridas al activar ASIGNA_FLUJOS_ENV=cloudera.
 # Deben apuntar al mismo bucket y prefijo definidos arriba.
 ASIGNA_FLUJOS_SOURCE_ROOT=s3://REEMPLAZAR_BUCKET/REEMPLAZAR_PREFIJO/data/raw

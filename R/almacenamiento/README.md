@@ -11,3 +11,6 @@ contener credenciales, nombres privados de buckets ni otros secretos.
 El modulo no abre conexiones al cargarse. Los consumidores deben cargarlo con
 `source()` y solicitar el cliente mediante `obtener_cliente_s3()` cuando lo
 necesiten.
+
+La operativa comprobada de configuracion, subida, descarga y validacion esta
+documentada en [GUIA_S3_CLOUDERA.md](GUIA_S3_CLOUDERA.md).
