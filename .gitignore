@@ -33,6 +33,7 @@
 # Credenciales, secretos y configuracion privada.
 .Renviron
 .Renviron.*
+!.Renviron.example
 .env
 .env.*
 !.env.example
@@ -77,3 +78,5 @@ _freeze/
 .covr/
 coverage/
 tests/testthat/_snaps.new/
+
+

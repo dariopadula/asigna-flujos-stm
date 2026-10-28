@@ -1,0 +1,20 @@
+# Perfil activo: local o cloudera.
+# Mantener "local" mientras Shiny consuma data/published desde el proyecto.
+ASIGNA_FLUJOS_ENV=local
+
+# Conexion administrada por Cloudera para operaciones S3.
+ASIGNA_FLUJOS_S3_CONNECTION="S3 Object Store"
+ASIGNA_FLUJOS_S3_BUCKET=REEMPLAZAR_BUCKET
+ASIGNA_FLUJOS_S3_PREFIX=REEMPLAZAR_PREFIJO/data
+
+# Raices requeridas al activar ASIGNA_FLUJOS_ENV=cloudera.
+# Deben apuntar al mismo bucket y prefijo definidos arriba.
+ASIGNA_FLUJOS_SOURCE_ROOT=s3://REEMPLAZAR_BUCKET/REEMPLAZAR_PREFIJO/data/raw
+ASIGNA_FLUJOS_REFERENCE_ROOT=s3://REEMPLAZAR_BUCKET/REEMPLAZAR_PREFIJO/data/reference
+ASIGNA_FLUJOS_REGISTRY_ROOT=s3://REEMPLAZAR_BUCKET/REEMPLAZAR_PREFIJO/data/registry
+ASIGNA_FLUJOS_PUBLISHED_ROOT=s3://REEMPLAZAR_BUCKET/REEMPLAZAR_PREFIJO/data/published
+ASIGNA_FLUJOS_QUARANTINE_ROOT=s3://REEMPLAZAR_BUCKET/REEMPLAZAR_PREFIJO/data/quarantine
+
+# Trabajo reconstruible y cache local/efimero del runtime de Cloudera.
+ASIGNA_FLUJOS_WORK_ROOT=/tmp/asigna_flujos_stm/work
+ASIGNA_FLUJOS_CACHE_ROOT=/tmp/asigna_flujos_stm/cache
