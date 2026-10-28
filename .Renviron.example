@@ -1,5 +1,5 @@
 # Perfil activo: local o cloudera.
-# Mantener "local" mientras Shiny consuma data/published desde el proyecto.
+# Usar "local" para archivos del proyecto o "cloudera" para raíces S3.
 ASIGNA_FLUJOS_ENV=local
 
 # Conexion administrada por Cloudera para operaciones S3.
@@ -14,6 +14,7 @@ RETICULATE_PYTHON=/usr/local/bin/python3
 # Raices requeridas al activar ASIGNA_FLUJOS_ENV=cloudera.
 # Deben apuntar al mismo bucket y prefijo definidos arriba.
 ASIGNA_FLUJOS_SOURCE_ROOT=s3://REEMPLAZAR_BUCKET/REEMPLAZAR_PREFIJO/data/raw
+ASIGNA_FLUJOS_INGESTED_ROOT=s3://REEMPLAZAR_BUCKET/REEMPLAZAR_PREFIJO/data/ingested
 ASIGNA_FLUJOS_REFERENCE_ROOT=s3://REEMPLAZAR_BUCKET/REEMPLAZAR_PREFIJO/data/reference
 ASIGNA_FLUJOS_REGISTRY_ROOT=s3://REEMPLAZAR_BUCKET/REEMPLAZAR_PREFIJO/data/registry
 ASIGNA_FLUJOS_PUBLISHED_ROOT=s3://REEMPLAZAR_BUCKET/REEMPLAZAR_PREFIJO/data/published

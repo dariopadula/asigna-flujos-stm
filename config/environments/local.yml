@@ -3,6 +3,7 @@ environment: local
 storage:
   backend: local
   source_root: data/raw
+  ingested_root: data/ingested
   reference_root: data/reference
   registry_root: data/registry
   published_root: data/published

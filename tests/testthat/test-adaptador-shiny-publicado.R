@@ -1,6 +1,7 @@
 source(file.path(
   "..", "..", "Shiny", "R", "adaptador_datos_publicados.R"
 ))
+source(file.path("..", "..", "R", "almacenamiento", "s3_io.R"))
 
 crear_publicacion_shiny_prueba <- function(raiz) {
   publicado <- file.path(raiz, "published")
@@ -156,6 +157,19 @@ crear_publicacion_shiny_prueba <- function(raiz) {
   arrow::write_parquet(viajes, file.path(
     dia, "viajes_consulta", "part-00001.parquet"
   ))
+  archivos_dia <- list.files(dia, recursive = TRUE, full.names = TRUE)
+  archivos_dia <- archivos_dia[
+    !dir.exists(archivos_dia) & basename(archivos_dia) != "manifiesto.yml"
+  ]
+  raiz_dia <- normalizePath(dia, winslash = "/", mustWork = TRUE)
+  data.table::fwrite(data.table::data.table(
+    archivo = substring(
+      normalizePath(archivos_dia, winslash = "/", mustWork = TRUE),
+      nchar(raiz_dia) + 2L
+    ),
+    bytes = as.numeric(file.info(archivos_dia)$size),
+    md5 = unname(tools::md5sum(archivos_dia))
+  ), file.path(dia, "manifiesto_archivos.csv"))
   publicado
 }
 
@@ -222,3 +236,41 @@ testthat::test_that("el adaptador rechaza rutas fuera de published", {
     "fuera de data/published"
   )
 })
+
+testthat::test_that(
+  "Shiny materializa estaticos al inicio y el dia bajo demanda desde S3",
+  {
+    raiz <- tempfile("shiny_s3_")
+    dir.create(raiz)
+    publicado <- crear_publicacion_shiny_prueba(raiz)
+    cliente <- crear_cliente_s3_simulado(file.path(raiz, "s3"))
+    subir_directorio_s3(
+      cliente, publicado, prefijo_relativo = "",
+      bucket = "bucket", prefix = "base/published"
+    )
+    cache <- file.path(raiz, "cache")
+    base <- materializar_base_publicada_s3(
+      "s3://bucket/base/published", cache,
+      "presentacion_prueba", cliente
+    )
+    directorio_dia <- file.path(
+      cache, "shiny", "published", "dias", "fecha=2026-05-20"
+    )
+    testthat::expect_identical(base$published_backend, "s3")
+    testthat::expect_true(file.exists(file.path(
+      directorio_dia, "manifiesto.yml"
+    )))
+    testthat::expect_length(list.files(
+      directorio_dia, pattern = "[.]parquet$", recursive = TRUE
+    ), 0L)
+
+    dia <- cargar_dia_shiny_publicado(base, "2026-05-20")
+    testthat::expect_equal(nrow(dia$bus), 2L)
+    testthat::expect_equal(nrow(dia$trips), 1L)
+    testthat::expect_true(length(list.files(
+      directorio_dia, pattern = "[.]parquet$", recursive = TRUE
+    )) > 0L)
+    repetido <- cargar_dia_shiny_publicado(base, "2026-05-20")
+    testthat::expect_identical(repetido$bus, dia$bus)
+  }
+)

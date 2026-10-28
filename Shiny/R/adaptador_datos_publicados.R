@@ -78,6 +78,149 @@ leer_coleccion_particionada <- function(directorio) {
   }), use.names = TRUE, fill = FALSE)
 }
 
+descargar_objeto_publicado_a_cache <- function(
+    cliente_s3, ubicacion, ruta_relativa, destino) {
+  ruta_relativa <- gsub("\\\\", "/", ruta_relativa)
+  metadatos <- obtener_metadatos_objeto_s3(
+    cliente_s3, ruta_relativa,
+    bucket = ubicacion$bucket, prefix = ubicacion$prefix
+  )
+  if (file.exists(destino) && !dir.exists(destino) &&
+      identical(as.numeric(file.info(destino)$size), metadatos$bytes)) {
+    etag_md5 <- grepl("^[a-fA-F0-9]{32}$", metadatos$etag)
+    if (!etag_md5 || identical(
+        tolower(unname(tools::md5sum(destino))), tolower(metadatos$etag))) {
+      return(destino)
+    }
+  }
+  dir.create(dirname(destino), recursive = TRUE, showWarnings = FALSE)
+  temporal <- tempfile(".objeto_s3_", tmpdir = dirname(destino))
+  on.exit(unlink(temporal, force = TRUE), add = TRUE)
+  descargar_archivo_s3(
+    cliente_s3, ruta_relativa, temporal,
+    bucket = ubicacion$bucket, prefix = ubicacion$prefix
+  )
+  if (!identical(as.numeric(file.info(temporal)$size), metadatos$bytes)) {
+    stop(sprintf("La descarga S3 quedo incompleta: %s.", ruta_relativa),
+      call. = FALSE)
+  }
+  if (file.exists(destino)) unlink(destino, force = TRUE)
+  if (!file.rename(temporal, destino)) {
+    stop(sprintf("No se pudo promover al cache: %s.", destino),
+      call. = FALSE)
+  }
+  destino
+}
+
+validar_inventario_publicado <- function(directorio) {
+  archivo_inventario <- file.path(directorio, "manifiesto_archivos.csv")
+  if (!file.exists(archivo_inventario)) {
+    stop("La publicacion materializada no contiene manifiesto de archivos.",
+      call. = FALSE)
+  }
+  inventario <- data.table::fread(archivo_inventario)
+  requeridas <- c("archivo", "bytes", "md5")
+  if (!all(requeridas %in% names(inventario)) || !nrow(inventario)) {
+    stop("El manifiesto de archivos publicado esta incompleto.",
+      call. = FALSE)
+  }
+  for (i in seq_len(nrow(inventario))) {
+    ruta <- ruta_local_relativa(
+      directorio, as.character(inventario$archivo[[i]])
+    )
+    valido <- file.exists(ruta) && !dir.exists(ruta) &&
+      identical(
+        as.numeric(file.info(ruta)$size), as.numeric(inventario$bytes[[i]])
+      ) && identical(
+        unname(tools::md5sum(ruta)), as.character(inventario$md5[[i]])
+      )
+    if (!valido) {
+      stop(sprintf("Archivo publicado ausente o invalido: %s.",
+        inventario$archivo[[i]]), call. = FALSE)
+    }
+  }
+  invisible(inventario)
+}
+
+materializar_base_publicada_s3 <- function(
+    raiz_publicada,
+    cache_root,
+    version_presentacion,
+    cliente_s3) {
+  ubicacion <- descomponer_uri_s3(raiz_publicada)
+  cache_publicado <- file.path(cache_root, "shiny", "published")
+  dir.create(cache_publicado, recursive = TRUE, showWarnings = FALSE)
+  sincronizar_prefijo_s3(
+    cliente_s3, "catalogo", file.path(cache_publicado, "catalogo"),
+    bucket = ubicacion$bucket, prefix = ubicacion$prefix
+  )
+  catalogo <- leer_catalogo_publicado(cache_publicado)
+
+  manifiestos <- vector("list", nrow(catalogo))
+  for (i in seq_len(nrow(catalogo))) {
+    relativa <- unir_key_s3(
+      catalogo$directorio[[i]], catalogo$archivo_manifiesto[[i]]
+    )
+    destino <- resolver_ruta_publicada(
+      cache_publicado, relativa, debe_existir = FALSE
+    )
+    descargar_objeto_publicado_a_cache(
+      cliente_s3, ubicacion, relativa, destino
+    )
+    manifiestos[[i]] <- yaml::read_yaml(destino)
+  }
+  referencias <- unique(catalogo$directorio_referencias)
+  for (relativa in referencias) {
+    destino <- resolver_ruta_publicada(
+      cache_publicado, relativa, debe_existir = FALSE
+    )
+    descargar_prefijo_s3(
+      cliente_s3, gsub("\\\\", "/", relativa), destino,
+      bucket = ubicacion$bucket, prefix = ubicacion$prefix,
+      reutilizar_existente = TRUE
+    )
+  }
+  redes <- unique(vapply(
+    manifiestos, function(x) as.character(x$red_canonica), character(1L)
+  ))
+  for (red in redes) {
+    relativa <- unir_key_s3(
+      "referencias", paste0("red=", red),
+      paste0("presentacion=", version_presentacion)
+    )
+    destino <- resolver_ruta_publicada(
+      cache_publicado, relativa, debe_existir = FALSE
+    )
+    descargar_prefijo_s3(
+      cliente_s3, relativa, destino,
+      bucket = ubicacion$bucket, prefix = ubicacion$prefix,
+      reutilizar_existente = TRUE
+    )
+  }
+  datos <- cargar_base_shiny_publicada(
+    cache_publicado, version_presentacion = version_presentacion
+  )
+  datos$published_backend <- "s3"
+  datos$remote_published_root <- sub("/+$", "", raiz_publicada)
+  datos$s3_client <- cliente_s3
+  datos$s3_location <- ubicacion
+  datos
+}
+
+materializar_dia_publicado_s3 <- function(datos, fila) {
+  relativa <- gsub("\\\\", "/", fila$directorio[[1L]])
+  destino <- resolver_ruta_publicada(
+    datos$published_root, relativa, debe_existir = FALSE
+  )
+  sincronizar_prefijo_s3(
+    datos$s3_client, relativa, destino,
+    bucket = datos$s3_location$bucket,
+    prefix = datos$s3_location$prefix
+  )
+  validar_inventario_publicado(destino)
+  destino
+}
+
 renombrar_columna_sf <- function(x, origen, destino) {
   if (origen %in% names(x)) names(x)[names(x) == origen] <- destino
   x
@@ -317,6 +460,7 @@ cargar_base_shiny_publicada <- function(
     published_root = normalizePath(
       raiz_publicada, winslash = "/", mustWork = TRUE
     ),
+    published_backend = "local",
     daily_cache = new.env(parent = emptyenv())
   )
 }
@@ -391,9 +535,11 @@ cargar_dia_shiny_publicado <- function(datos, fecha) {
     stop(sprintf("La fecha %s no esta publicada y lista.", fecha),
       call. = FALSE)
   }
-  directorio_dia <- resolver_ruta_publicada(
-    datos$published_root, fila$directorio[[1L]]
-  )
+  directorio_dia <- if (identical(datos$published_backend, "s3")) {
+    materializar_dia_publicado_s3(datos, fila)
+  } else {
+    resolver_ruta_publicada(datos$published_root, fila$directorio[[1L]])
+  }
   bus_limpio <- leer_coleccion_particionada(file.path(
     directorio_dia, fila$directorio_ocupacion[[1L]]
   ))

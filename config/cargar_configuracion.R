@@ -65,9 +65,13 @@ resolver_fuente_od <- function(configuracion, fecha) {
 }
 
 validar_configuracion_ambiente <- function(configuracion) {
+  if (!configuracion$storage$backend %in% c("local", "s3")) {
+    stop(sprintf("Backend de almacenamiento desconocido: %s.",
+      configuracion$storage$backend), call. = FALSE)
+  }
   raices_persistentes <- c(
-    "source_root", "reference_root", "registry_root", "published_root",
-    "quarantine_root"
+    "source_root", "ingested_root", "reference_root", "registry_root",
+    "published_root", "quarantine_root"
   )
   faltantes <- raices_persistentes[!vapply(
     raices_persistentes,
@@ -120,6 +124,7 @@ materializar_compatibilidad_config <- function(configuracion) {
       configuracion$sources$variant_stops,
       function(ruta) unir_ubicacion(configuracion$storage$reference_root, ruta)
     ),
+    ingested = configuracion$storage$ingested_root,
     intermediate = configuracion$execution$work_root
   )
   configuracion$daily_variant_usage$canonical_registry_root <- unir_ubicacion(

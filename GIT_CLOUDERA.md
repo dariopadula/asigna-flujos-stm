@@ -27,7 +27,7 @@ ambiente.
 
 ### No se versiona
 
-- ningún dato raw, referencia materializada, registro, intermedio,
+- ningún dato raw, ingested, referencia materializada, registro, intermedio,
   publicación, cuarentena o caché;
 - código retirado bajo `en_desuso/`;
 - la configuración histórica `config/pipeline.yml`;
@@ -48,6 +48,7 @@ Git transporta código y configuración, no datos. El contrato actual del perfil
 | Variable | Contenido | Persistencia esperada |
 | --- | --- | --- |
 | `ASIGNA_FLUJOS_SOURCE_ROOT` | OD y fuentes de ingesta | almacenamiento persistente |
+| `ASIGNA_FLUJOS_INGESTED_ROOT` | OD diaria normalizada en Parquet | almacenamiento persistente |
 | `ASIGNA_FLUJOS_REFERENCE_ROOT` | fuentes geográficas/maestras | almacenamiento persistente |
 | `ASIGNA_FLUJOS_REGISTRY_ROOT` | registros canónicos versionados | almacenamiento persistente |
 | `ASIGNA_FLUJOS_PUBLISHED_ROOT` | insumos finales consumibles por la app | almacenamiento persistente |
@@ -55,7 +56,7 @@ Git transporta código y configuración, no datos. El contrato actual del perfil
 | `ASIGNA_FLUJOS_WORK_ROOT` | intermedios y checkpoints del job | disco de trabajo del job |
 | `ASIGNA_FLUJOS_CACHE_ROOT` | materializaciones reconstruibles | disco local/efímero |
 
-El perfil actual valida URI S3 para las cinco raíces persistentes. Si el
+El perfil actual valida URI S3 para las seis raíces persistentes. Si el
 ambiente final usa HDFS u otro servicio en vez de S3, se necesita implementar
 ese backend; no alcanza con cambiar el texto de las variables.
 
@@ -139,3 +140,8 @@ El 27/10/2026 se simuló un índice Git sin inicializar el repositorio real:
 - copia limpia construida sólo con los candidatos;
 - suite completa en la copia limpia: 348 pruebas aprobadas, 0 fallos, 0
   advertencias de test y 0 omisiones.
+
+El 28/10/2026, después de incorporar almacenamiento intercambiable,
+materialización selectiva y Shiny S3, la suite del repositorio de trabajo
+terminó con 397 pruebas aprobadas, 0 fallos, 0 advertencias de test y 0
+omisiones.

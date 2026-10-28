@@ -12,6 +12,13 @@ if (length(argumentos) != 1L) {
 if (!requireNamespace("yaml", quietly = TRUE)) stop("Falta instalar el paquete R 'yaml'.", call. = FALSE)
 source(file.path(raiz_proyecto, "config", "cargar_configuracion.R"))
 configuracion <- cargar_configuracion(raiz_proyecto)
+source(file.path(raiz_proyecto, "R", "almacenamiento", "s3_io.R"))
+source(file.path(raiz_proyecto, "R", "almacenamiento", "materializar_configuracion.R"))
+if (identical(configuracion$storage$backend, "s3")) {
+  configuracion <- materializar_configuracion_lectura(
+    configuracion, obtener_cliente_s3(), "reference_root"
+  )
+}
 resolver_ruta <- function(ruta) resolver_ubicacion_configurada(ruta, raiz_proyecto)
 fecha <- argumentos[[1]]
 intermedio <- resolver_ruta(configuracion$paths$intermediate)

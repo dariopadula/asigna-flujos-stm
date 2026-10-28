@@ -5,6 +5,11 @@ source(file.path(
 source(file.path(
   "..", "..", "pipeline_diario", "R", "publicacion", "publicar_dia.R"
 ))
+source(file.path("..", "..", "R", "almacenamiento", "s3_io.R"))
+source(file.path(
+  "..", "..", "pipeline_diario", "R", "publicacion",
+  "publicar_dia_almacenamiento.R"
+))
 
 crear_poligono_prueba <- function(xmin, xmax, nombre, columna) {
   geometria <- sf::st_polygon(list(matrix(c(
@@ -228,3 +233,47 @@ testthat::test_that(
     )
   }
 )
+
+testthat::test_that("la publicacion S3 escribe el catalogo al final", {
+  raiz <- tempfile("publicacion_s3_")
+  dir.create(raiz)
+  entradas <- crear_entradas_publicacion(raiz)
+  cliente <- crear_cliente_s3_simulado(file.path(raiz, "s3"))
+  resultado <- publicar_dia_almacenamiento(
+    fecha = entradas$fecha,
+    directorio_ocupacion = entradas$ocupacion,
+    directorio_insumos = entradas$insumos,
+    directorio_regiones = entradas$regiones,
+    directorio_red_canonica = entradas$red,
+    published_root = "s3://bucket/base/published",
+    backend = "s3",
+    work_root = file.path(raiz, "work"),
+    cliente_s3 = cliente
+  )
+  testthat::expect_match(resultado$destino, "s3://bucket/base/published/dias")
+  testthat::expect_true(all(
+    resultado$transferencia$dia$estado %in% c("subido", "reutilizado")
+  ))
+  testthat::expect_identical(
+    tail(cliente$.uploads, 1L),
+    "base/published/catalogo/fecha=2026-05-20.yml"
+  )
+  testthat::expect_true(existe_objeto_s3(
+    cliente, "catalogo/fecha=2026-05-20.yml",
+    bucket = "bucket", prefix = "base/published"
+  ))
+  testthat::expect_error(
+    publicar_dia_almacenamiento(
+      fecha = entradas$fecha,
+      directorio_ocupacion = entradas$ocupacion,
+      directorio_insumos = entradas$insumos,
+      directorio_regiones = entradas$regiones,
+      directorio_red_canonica = entradas$red,
+      published_root = "s3://bucket/base/published",
+      backend = "s3",
+      work_root = file.path(raiz, "work"),
+      cliente_s3 = cliente
+    ),
+    "catalogo S3 ya contiene"
+  )
+})

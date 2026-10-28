@@ -20,17 +20,32 @@ pipeline_diario/
 
 ## Primer bloque migrado: ingesta OD diaria
 
-La ingesta recibe una fecha, filtra el CSV mensual sin cargarlo completo en
-memoria y crea una partición diaria en Parquet junto con controles básicos.
+La ingesta abre el CSV mensual una sola vez por operación, filtra una fecha o
+un mes sin cargar la tabla completa en memoria y crea particiones diarias
+persistentes con esquema, inventario, resumen y controles.
 
 Desde `proyecto_flujo/`:
 
 ```powershell
 & "C:\Program Files\R\R-4.5.1\bin\Rscript.exe" pipeline_diario/scripts/01_ingerir_od.R 2026-05-20
+# Mes completo (omite días sin filas):
+& "C:\Program Files\R\R-4.5.1\bin\Rscript.exe" pipeline_diario/scripts/01_ingerir_od.R 2026-05
 ```
 
-La salida queda en `data/intermediate/od/fecha=2026-05-20/`. El proceso no
-sobrescribe una fecha existente.
+La salida queda en `data/ingested/od/fecha=2026-05-20/`. Puede contener varias
+partes `part-*.parquet`. El proceso no sobrescribe una fecha existente; la
+opción explícita `--sobrescribir` reconstruye sólo la fecha solicitada.
+
+Para subir una partición preparada al `ingested_root` S3 del perfil Cloudera:
+
+```bash
+Rscript pipeline_diario/scripts/01b_subir_od_ingestada.R 2026-05-20 \
+  data/ingested/od/fecha=2026-05-20
+```
+
+La subida rechaza claves existentes y verifica cada objeto. El paso 02 usa la
+misma estructura lógica: en local valida la partición directamente; en S3
+descarga únicamente esa fecha a `execution.cache_root`.
 
 ## Segundo bloque migrado: OD operativa
 
@@ -43,6 +58,8 @@ clasificación mensual de `lineas_metro.csv`:
 
 La salida queda en `data/intermediate/od_operativa/fecha=2026-05-20/`. Se
 detiene si encuentra una línea sin catálogo o si la salida ya existe.
+En Cloudera, las referencias y registros persistentes requeridos por los pasos
+posteriores se sincronizan al caché local de forma explícita en los lanzadores.
 
 ## Tercer bloque: diagnóstico de variantes
 
@@ -238,4 +255,9 @@ estáticas se comparten bajo `data/published/referencias/` y el catálogo usa un
 YAML append-only por fecha bajo `data/published/catalogo/`. Antes de este paso
 debe existir el registro regional documentado en el README del pipeline de
 referencias.
+
+Con backend S3, el paso genera y valida todo en un directorio local temporal,
+sube y verifica referencias y archivos diarios, y sólo entonces sube
+`catalogo/fecha=AAAA-MM-DD.yml`. No depende de renombrados atómicos remotos y
+una fecha sin ese catálogo nunca queda visible para Shiny.
 

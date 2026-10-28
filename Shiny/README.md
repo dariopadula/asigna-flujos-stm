@@ -1,8 +1,8 @@
 # Aplicación Shiny autocontenida
 
-La aplicación consume exclusivamente publicaciones validadas desde
-`data/published/`. No procesa la matriz OD ni reconstruye horarios, ocupación o
-referencias.
+La aplicación consume exclusivamente publicaciones validadas. En local usa
+`data/published/`; en Cloudera usa `storage.published_root` S3 mediante un caché
+local. No procesa la matriz OD ni reconstruye horarios, ocupación o referencias.
 
 Todo su código activo vive bajo `Shiny/`:
 
@@ -31,6 +31,18 @@ shiny::runApp("Shiny")
 La aplicación sólo muestra fechas cuyo catálogo tiene `estado: listo` y carga
 las colecciones del día al seleccionarlo.
 
+## Ejecutar con publicaciones S3
+
+Con `ASIGNA_FLUJOS_ENV=cloudera` y las variables de `.Renviron.example`
+completas, el arranque sincroniza el catálogo, los manifiestos diarios pequeños
+y las referencias estáticas compatibles. No descarga la historia diaria. Al
+seleccionar una fecha, materializa únicamente `dias/fecha=AAAA-MM-DD/`, valida
+el inventario y los conteos, y reutiliza esa copia durante la sesión.
+
+Si S3 no está disponible, falta un objeto o una fecha no coincide con sus
+manifiestos, la carga se detiene con un mensaje explícito y la fecha incompleta
+no se expone.
+
 ## Validar una fecha publicada
 
 Desde la raíz de `proyecto_flujo/`:
@@ -58,6 +70,6 @@ terminan en `20260520.R` se mantienen como alias de compatibilidad.
 - arranque de `Shiny/app.R` como aplicación autocontenida: aprobado.
 
 La aplicación usa la configuración común de `config/`. El perfil predeterminado
-es `local`; el perfil `cloudera` ya valida su contrato, pero la lectura S3 se
-implementará después de confirmar el ambiente real.
+es `local`; el perfil `cloudera` conserva el mismo contrato de datos mediante
+materialización selectiva en caché.
 

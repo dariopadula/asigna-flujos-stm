@@ -23,6 +23,9 @@ configuracion_app <- cargar_configuracion(raiz_proyecto)
 cache_sass <- file.path(configuracion_app$execution$cache_root, "shiny", "sass")
 dir.create(cache_sass, recursive = TRUE, showWarnings = FALSE)
 options(sass.cache = cache_sass)
+source(file.path(
+  raiz_proyecto, "R", "almacenamiento", "s3_io.R"
+), local = TRUE)
 
 paquetes <- c(
   "shiny", "bslib", "leaflet", "leaflet.extras", "arrow", "sf",

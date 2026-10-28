@@ -12,7 +12,8 @@ es usado por el pipeline diario y Shiny.
 ## Perfil local
 
 Todas las raices son relativas a `proyecto_flujo/` y el cargador las convierte
-en rutas absolutas. Se distinguen fuente, referencias, registros, trabajo,
+en rutas absolutas. Se distinguen fuente original (`raw`), ingesta normalizada
+persistente (`ingested`), referencias, registros, trabajo reconstruible,
 publicacion, cuarentena y cache.
 
 ## Perfil Cloudera
@@ -22,6 +23,7 @@ S3. Trabajo y cache se reciben tambien por variables, pero deben pertenecer al
 filesystem del job. Las variables requeridas son:
 
 - `ASIGNA_FLUJOS_SOURCE_ROOT`
+- `ASIGNA_FLUJOS_INGESTED_ROOT`
 - `ASIGNA_FLUJOS_REFERENCE_ROOT`
 - `ASIGNA_FLUJOS_REGISTRY_ROOT`
 - `ASIGNA_FLUJOS_PUBLISHED_ROOT`

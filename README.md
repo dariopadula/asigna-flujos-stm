@@ -12,6 +12,7 @@ proyecto_flujo/
 ├── tests/             # Pruebas del pipeline y sus contratos
 └── data/
     ├── raw/           # Fuentes transaccionales sin modificar
+    ├── ingested/      # Fuentes normalizadas persistentes (Parquet diario)
     ├── reference/     # Fuentes maestras y geográficas
     ├── intermediate/  # Derivados internos reconstruibles
     ├── registry/      # Inventarios y red canónica append-only
@@ -43,8 +44,13 @@ shiny::runApp("Shiny")
 
 Usa el perfil `local` de `config/environments/local.yml` y consume solamente
 fechas completas de `data/published/`. La configuración común y el perfil
-`cloudera` están documentados en `config/README.md`; la transferencia y lectura
-S3 siguen pendientes de confirmar el ambiente real.
+`cloudera` están documentados en `config/README.md`. En Cloudera, Shiny
+sincroniza catálogo y referencias estáticas al iniciar y descarga solamente la
+fecha solicitada a `execution.cache_root`.
+
+La conversión OD, la materialización local/S3, la publicación con catálogo al
+final y el procedimiento operativo de una fecha están documentados en
+`pipeline_diario/README.md` y `R/almacenamiento/GUIA_S3_CLOUDERA.md`.
 
 ## Código en desuso
 

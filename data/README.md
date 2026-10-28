@@ -35,8 +35,9 @@ OD. Véanse `cerebro_flujo_stm/32_bootstrap_referencias_canonicas_limpio.md` y
 
 ## `intermediate/`
 
-Resultados internos reconstruibles: OD normalizada, proyecciones, secuencias,
-horarios y cálculos previos a la publicación.
+Resultados internos reconstruibles: OD operativa, proyecciones, secuencias,
+horarios y cálculos previos a la publicación. La OD normalizada persistente
+pertenece a `ingested/`, no a esta capa.
 
 La construcción de variantes usa candidatos reanudables bajo
 `intermediate/referencias/variantes_canonicas/`: primero proyección y

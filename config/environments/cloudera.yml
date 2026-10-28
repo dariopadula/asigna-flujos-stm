@@ -5,6 +5,7 @@ environment: cloudera
 storage:
   backend: s3
   source_root: ${ASIGNA_FLUJOS_SOURCE_ROOT}
+  ingested_root: ${ASIGNA_FLUJOS_INGESTED_ROOT}
   reference_root: ${ASIGNA_FLUJOS_REFERENCE_ROOT}
   registry_root: ${ASIGNA_FLUJOS_REGISTRY_ROOT}
   published_root: ${ASIGNA_FLUJOS_PUBLISHED_ROOT}
