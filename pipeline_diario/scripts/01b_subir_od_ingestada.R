@@ -40,6 +40,6 @@ plan <- subir_od_dia_s3(
   columnas_requeridas = unlist(configuracion$ingestion$required_columns)
 )
 cat(sprintf(
-  "Particion subida: %d archivos, %.2f MB.\n",
+  "Particion subida: %d archivos Parquet, %.2f MB.\n",
   nrow(plan), sum(plan$bytes) / 1024^2
 ))

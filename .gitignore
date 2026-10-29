@@ -79,4 +79,8 @@ _freeze/
 coverage/
 tests/testthat/_snaps.new/
 
+# Documentos
+
+ESTADO_ACTUAL.md
+
 

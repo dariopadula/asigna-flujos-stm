@@ -295,6 +295,8 @@ ASIGNA_FLUJOS_ENV=local Rscript \
 El resultado esperado es
 `data/ingested/od/fecha=2026-05-20/`, con `part-*.parquet`, resumen,
 faltantes y `manifiesto.yml`. Para un mes completo puede pasarse `2026-05`.
+Esos archivos auxiliares son controles generados por este proyecto; no forman
+parte del contrato que debe cumplir un productor externo.
 
 ### 11.2 Subir la fecha a `ingested_root`
 
@@ -306,8 +308,19 @@ Rscript pipeline_diario/scripts/01b_subir_od_ingestada.R \
   2026-05-20 data/ingested/od/fecha=2026-05-20
 ```
 
-La operación valida el manifiesto local, conserva rutas relativas y comprueba
-el tamaño de cada objeto subido.
+La operación descubre y valida uno o varios `*.parquet`, conserva sus rutas
+relativas y comprueba el tamaño de cada objeto subido. Sólo sube los Parquet:
+no exige ni envía `manifiesto.yml`, resúmenes o controles. Por lo tanto, otro
+proceso puede escribir directamente en S3 una fecha con esta forma mínima:
+
+```text
+od/fecha=2026-05-20/
+├── part-0.parquet
+└── part-1.parquet  # opcional; puede haber una o más partes
+```
+
+El paso 02 interpreta todas las partes como un único dataset diario y calcula
+internamente el inventario, las filas, los tamaños y los MD5.
 
 ### 11.3 Ejecutar el pipeline diario
 

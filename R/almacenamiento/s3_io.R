@@ -443,13 +443,25 @@ planificar_subida_directorio_s3 <- function(
     directorio_local,
     prefijo_relativo = "",
     incluir_ocultos = FALSE,
-    prefix = leer_variable_s3("ASIGNA_FLUJOS_S3_PREFIX", obligatoria = FALSE)) {
+    prefix = leer_variable_s3("ASIGNA_FLUJOS_S3_PREFIX", obligatoria = FALSE),
+    archivos_locales = NULL) {
   raiz <- normalizePath(directorio_local, winslash = "/", mustWork = TRUE)
   archivos <- list.files(
     raiz, recursive = TRUE, full.names = TRUE, all.files = incluir_ocultos,
     no.. = TRUE
   )
   archivos <- archivos[!dir.exists(archivos)]
+  if (!is.null(archivos_locales)) {
+    seleccionados <- normalizePath(
+      archivos_locales, winslash = "/", mustWork = TRUE
+    )
+    disponibles <- normalizePath(archivos, winslash = "/", mustWork = TRUE)
+    if (anyDuplicated(seleccionados) || !all(seleccionados %in% disponibles)) {
+      stop("Los archivos seleccionados deben pertenecer al directorio local.",
+        call. = FALSE)
+    }
+    archivos <- archivos[match(seleccionados, disponibles)]
+  }
   if (!isTRUE(incluir_ocultos)) {
     relativas_previas <- substring(
       normalizePath(archivos, winslash = "/", mustWork = TRUE),
@@ -482,9 +494,11 @@ subir_directorio_s3 <- function(
     bucket = leer_variable_s3("ASIGNA_FLUJOS_S3_BUCKET"),
     prefix = leer_variable_s3("ASIGNA_FLUJOS_S3_PREFIX", obligatoria = FALSE),
     permitir_existentes_identicos = FALSE,
-    rutas_al_final = character()) {
+    rutas_al_final = character(),
+    archivos_locales = NULL) {
   plan <- planificar_subida_directorio_s3(
-    directorio_local, prefijo_relativo, prefix = prefix
+    directorio_local, prefijo_relativo, prefix = prefix,
+    archivos_locales = archivos_locales
   )
   al_final <- plan$ruta_relativa %in% rutas_al_final
   plan <- plan[order(al_final, plan$ruta_relativa), , drop = FALSE]

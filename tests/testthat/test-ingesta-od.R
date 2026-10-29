@@ -136,19 +136,33 @@ test_that("la particion se materializa igual desde local y S3 simulado", {
   dir.create(raiz)
   archivo <- file.path(raiz, "od.csv")
   muestra <- data.frame(
-    fecha_evento_subida = "2026-05-20 08:00:00",
-    fecha_evento_bajada = "2026-05-20 08:10:00",
-    linea_codigo_subida = 1L, sevar_codigo_subida = 10L,
-    codigo_parada_subida = 100L, codigo_parada_bajada = 200L,
-    cantidad_pasajeros = 2L, id_recorrido_global = "a",
+    fecha_evento_subida = c(
+      "2026-05-20 08:00:00", "2026-05-20 09:00:00"
+    ),
+    fecha_evento_bajada = c(
+      "2026-05-20 08:10:00", "2026-05-20 09:10:00"
+    ),
+    linea_codigo_subida = c(1L, 2L), sevar_codigo_subida = c(10L, 20L),
+    codigo_parada_subida = c(100L, 101L),
+    codigo_parada_bajada = c(200L, 201L),
+    cantidad_pasajeros = c(2L, 1L), id_recorrido_global = c("a", "b"),
     valid = "True", global = "True", anio_mes = 202605L
   )
   data.table::fwrite(muestra, archivo)
   ingested <- file.path(raiz, "ingested")
   resultado <- ingerir_od_dia(
     "2026-05-20", archivo, ingested, names(muestra),
-    c("codigo_parada_subida", "codigo_parada_bajada")
+    c("codigo_parada_subida", "codigo_parada_bajada"),
+    filas_por_archivo = 1L
   )
+  auxiliares <- list.files(resultado$destino, full.names = TRUE)
+  auxiliares <- auxiliares[!grepl("[.]parquet$", auxiliares)]
+  unlink(auxiliares, recursive = TRUE, force = TRUE)
+  expect_length(list.files(
+    resultado$destino, pattern = "[.]parquet$", full.names = TRUE
+  ), 2L)
+  expect_false(file.exists(file.path(resultado$destino, "manifiesto.yml")))
+
   local <- materializar_od_dia(
     "2026-05-20", ingested, "local", file.path(raiz, "cache"),
     columnas_requeridas = names(muestra)
@@ -168,11 +182,35 @@ test_that("la particion se materializa igual desde local y S3 simulado", {
     file.path(raiz, "cache"), columnas_requeridas = names(muestra),
     cliente_s3 = cliente
   )
-  expect_true(file.exists(file.path(remoto, "manifiesto.yml")))
-  expect_equal(
-    as.numeric(yaml::read_yaml(file.path(remoto, "manifiesto.yml"))$salida$filas),
-    1
+  expect_false(file.exists(file.path(remoto, "manifiesto.yml")))
+  expect_length(list.files(
+    remoto, pattern = "[.]parquet$", recursive = TRUE, full.names = TRUE
+  ), 2L)
+  validacion <- validar_particion_od_ingestada(
+    remoto, "2026-05-20", columnas_requeridas = names(muestra)
   )
+  expect_equal(validacion$filas, 2)
+  expect_equal(nrow(validacion$inventario), 2L)
+})
+
+test_that("el manifiesto externo no condiciona la ingesta Parquet", {
+  raiz <- tempfile("ingesta_sin_manifiesto_")
+  dir.create(raiz)
+  arrow::write_parquet(
+    data.frame(fecha_evento_subida = "2026-05-20 08:00:00", valor = 1L),
+    file.path(raiz, "part-0.parquet")
+  )
+  yaml::write_yaml(list(
+    fecha_objetivo = "fecha-incorrecta",
+    salida = list(formato = "csv", filas = 999)
+  ), file.path(raiz, "manifiesto.yml"))
+
+  validacion <- validar_particion_od_ingestada(
+    raiz, "2026-05-20",
+    columnas_requeridas = c("fecha_evento_subida", "valor")
+  )
+  expect_equal(validacion$filas, 1)
+  expect_identical(validacion$inventario$archivo, "part-0.parquet")
 })
 
 test_that("la ingesta rechaza una fecha ya generada", {

@@ -43,9 +43,13 @@ Rscript pipeline_diario/scripts/01b_subir_od_ingestada.R 2026-05-20 \
   data/ingested/od/fecha=2026-05-20
 ```
 
-La subida rechaza claves existentes y verifica cada objeto. El paso 02 usa la
-misma estructura lógica: en local valida la partición directamente; en S3
-descarga únicamente esa fecha a `execution.cache_root`.
+El contrato de entrada sólo exige uno o más archivos Parquet válidos. El
+productor no debe generar `manifiesto.yml`, resúmenes ni controles: el pipeline
+descubre todas las partes, valida el esquema y calcula internamente filas,
+tamaños y MD5. La subida envía únicamente los Parquet, rechaza claves existentes
+y verifica cada objeto. El paso 02 usa la misma estructura lógica: en local
+valida la partición directamente; en S3 descarga únicamente esa fecha a
+`execution.cache_root`.
 
 ## Segundo bloque migrado: OD operativa
 

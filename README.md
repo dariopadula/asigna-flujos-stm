@@ -52,6 +52,9 @@ La conversión OD, la materialización local/S3, la publicación con catálogo a
 final y el procedimiento operativo de una fecha están documentados en
 `pipeline_diario/README.md` y `R/almacenamiento/GUIA_S3_CLOUDERA.md`.
 
+El punto exacto de reanudación, los resultados de la prueba en Cloudera y las
+decisiones todavía pendientes se mantienen en [ESTADO_ACTUAL.md](ESTADO_ACTUAL.md).
+
 ## Código en desuso
 
 Cualquier carpeta de código `R/` o `scripts/` puede contener una subcarpeta
