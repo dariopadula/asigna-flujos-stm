@@ -22,6 +22,15 @@ if (!requireNamespace("yaml", quietly = TRUE)) {
 
 source(file.path(raiz_proyecto, "config", "cargar_configuracion.R"))
 configuracion <- cargar_configuracion(raiz_proyecto)
+source(file.path(raiz_proyecto, "R", "almacenamiento", "s3_io.R"))
+source(file.path(
+  raiz_proyecto, "R", "almacenamiento", "materializar_configuracion.R"
+))
+if (identical(configuracion$storage$backend, "s3")) {
+  configuracion <- materializar_configuracion_lectura(
+    configuracion, obtener_cliente_s3(), "registry_root"
+  )
+}
 resolver_ruta <- function(ruta) {
   resolver_ubicacion_configurada(ruta, raiz_proyecto)
 }
@@ -56,9 +65,10 @@ resultado <- preparar_insumos_consulta_dia(
     intermedio, "ocupacion_recorridos", paste0("fecha=", fecha)
   ),
   directorio_paradas_canonicas = file.path(
-    intermedio, "referencias", "variantes_canonicas",
-    paste0("red=", red), paste0("entrega=", snapshot),
-    "02_asignacion_paradas"
+    resolver_ruta(
+      configuracion$daily_variant_usage$canonical_registry_root
+    ),
+    paste0("red=", red), paste0("entrega=", snapshot)
   ),
   directorio_salida = intermedio,
   zona_horaria = configuracion$project$timezone
