@@ -1,5 +1,8 @@
 # Pipeline diario
 
+El mapa completo de entradas, pasos, salidas y persistencia para local y
+Cloudera está en [FLUJO_COMPLETO.md](FLUJO_COMPLETO.md).
+
 Este directorio contendrá la orquestación y las funciones del procesamiento
 diario. La migración se realizará por etapas, comparando cada resultado con el
 flujo vigente antes de modificar su comportamiento.

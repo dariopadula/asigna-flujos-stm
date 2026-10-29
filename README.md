@@ -51,6 +51,9 @@ fecha solicitada a `execution.cache_root`.
 La conversión OD, la materialización local/S3, la publicación con catálogo al
 final y el procedimiento operativo de una fecha están documentados en
 `pipeline_diario/README.md` y `R/almacenamiento/GUIA_S3_CLOUDERA.md`.
+El diagrama completo del recorrido de datos, con una vista local y otra para
+Cloudera/S3, está en
+[pipeline_diario/FLUJO_COMPLETO.md](pipeline_diario/FLUJO_COMPLETO.md).
 
 El punto exacto de reanudación, los resultados de la prueba en Cloudera y las
 decisiones todavía pendientes se mantienen en [ESTADO_ACTUAL.md](ESTADO_ACTUAL.md).

@@ -1,5 +1,8 @@
 # Guia operativa S3 desde Cloudera
 
+Para entender el flujo funcional completo antes de ejecutar esta guía, ver
+[el diagrama local y Cloudera/S3](../../pipeline_diario/FLUJO_COMPLETO.md).
+
 Esta guia describe el procedimiento comprobado para conectar R con la conexion
 `S3 Object Store` de Cloudera, subir o descargar archivos y verificar el
 resultado. No se deben guardar credenciales, tokens ni valores privados en Git.
