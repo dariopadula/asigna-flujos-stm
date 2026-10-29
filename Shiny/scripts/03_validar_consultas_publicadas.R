@@ -10,6 +10,8 @@ raiz <- normalizePath(
   winslash = "/", mustWork = TRUE
 )
 
+source(file.path(raiz, "R", "almacenamiento", "s3_io.R"))
+
 for (archivo in c(
     "Shiny/R/consultas_temporales.R",
     "Shiny/R/adaptador_datos_publicados.R",

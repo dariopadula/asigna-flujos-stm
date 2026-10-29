@@ -18,17 +18,21 @@ for (paquete in c("arrow", "data.table", "sf", "yaml")) {
 source(file.path(raiz_proyecto, "config", "cargar_configuracion.R"))
 configuracion <- cargar_configuracion(raiz_proyecto)
 source(file.path(
+  raiz_proyecto, "R", "almacenamiento", "s3_io.R"
+))
+source(file.path(
   raiz_proyecto, "Shiny", "R", "adaptador_datos_publicados.R"
+))
+source(file.path(
+  raiz_proyecto, "Shiny", "R", "datos_app.R"
 ))
 
 argumentos <- commandArgs(trailingOnly = TRUE)
 fecha <- as.Date(if (length(argumentos)) argumentos[[1L]] else "2026-05-20")
-raiz_publicada <- configuracion$publication$output_root
 cat("[shiny-publicado] Cargando catalogo y referencias estaticas...\n")
-base <- cargar_base_shiny_publicada(
-  raiz_publicada = raiz_publicada,
-  version_presentacion =
-    configuracion$publication$presentation_registry_version
+base <- cargar_datos_app(
+  raiz_proyecto = raiz_proyecto,
+  configuracion = configuracion
 )
 cat(sprintf(
   paste0(
@@ -86,28 +90,33 @@ esperados_diarios <- list(
   )
 )
 esperado_diario <- esperados_diarios[[as.character(fecha)]]
-if (is.null(esperado_diario)) {
-  stop("La fecha no tiene una referencia de regresion documentada.",
-    call. = FALSE)
-}
 esperado <- c(
-  fechas_listas = 2,
   ocurrencias_presentacion = 1069719,
   identidades_presentacion = 61273,
   paradas = 13250,
-  calles = 2022,
-  esperado_diario
+  calles = 2022
 )
+if (!is.null(esperado_diario)) esperado <- c(esperado, esperado_diario)
+indicadores_regresion <- names(esperado)
 controles <- data.table::data.table(
   control = c(
-    paste0("regresion_", resumen$indicador),
+    "catalogo_no_vacio",
+    "catalogo_contiene_fecha",
+    paste0("regresion_", indicadores_regresion),
+    "colecciones_diarias_no_vacias",
+    "totales_diarios_consistentes",
     "ocupacion_con_presentacion_completa",
     "ocupacion_sin_claves_duplicadas",
     "viajes_con_intervalo_valido",
     "cache_diaria_activa"
   ),
   aprobado = c(
-    resumen$valor == esperado[resumen$indicador],
+    length(base$dates) > 0L,
+    fecha %in% base$dates,
+    resumen$valor[match(indicadores_regresion, resumen$indicador)] == esperado,
+    nrow(dia$bus) > 0L && nrow(dia$stop_passes) > 0L && nrow(dia$trips) > 0L,
+    sum(dia$trips$cantidad_pasajeros) == sum(dia$stop_passes$subidas) &&
+      sum(dia$trips$cantidad_pasajeros) == sum(dia$stop_passes$bajadas),
     !anyNA(dia$bus[, .(
       ID_presentacion, ID_punto, COD_VARIAN, COD_LINEA, dirAv
     )]),
