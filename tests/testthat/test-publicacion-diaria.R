@@ -72,8 +72,7 @@ crear_registro_regiones_prueba <- function(raiz) {
   )
 }
 
-crear_entradas_publicacion <- function(raiz) {
-  fecha <- "2026-05-20"
+crear_entradas_publicacion <- function(raiz, fecha = "2026-05-20") {
   region <- crear_registro_regiones_prueba(raiz)
   ocupacion <- file.path(raiz, "ocupacion")
   insumos <- file.path(raiz, "insumos")
@@ -260,6 +259,29 @@ testthat::test_that("la publicacion S3 escribe el catalogo al final", {
   )
   testthat::expect_true(existe_objeto_s3(
     cliente, "catalogo/fecha=2026-05-20.yml",
+    bucket = "bucket", prefix = "base/published"
+  ))
+  entradas_segundo_dia <- crear_entradas_publicacion(
+    file.path(raiz, "segundo_dia"), "2026-05-21"
+  )
+  entradas_segundo_dia$regiones <- entradas$regiones
+  entradas_segundo_dia$red <- entradas$red
+  segundo <- publicar_dia_almacenamiento(
+    fecha = entradas_segundo_dia$fecha,
+    directorio_ocupacion = entradas_segundo_dia$ocupacion,
+    directorio_insumos = entradas_segundo_dia$insumos,
+    directorio_regiones = entradas_segundo_dia$regiones,
+    directorio_red_canonica = entradas_segundo_dia$red,
+    published_root = "s3://bucket/base/published",
+    backend = "s3",
+    work_root = file.path(raiz, "work"),
+    cliente_s3 = cliente
+  )
+  testthat::expect_true(all(
+    segundo$transferencia$referencias$estado == "reutilizado"
+  ))
+  testthat::expect_true(existe_objeto_s3(
+    cliente, "catalogo/fecha=2026-05-21.yml",
     bucket = "bucket", prefix = "base/published"
   ))
   testthat::expect_error(
