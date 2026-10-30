@@ -83,3 +83,17 @@ filter_operational_window <- function(x, date, hours, time_column) {
       get(time_column) < start + hours[[2]] * 3600]
 }
 
+filter_service_type <- function(x, service_type = "todos") {
+  service_type <- match.arg(service_type, c("todos", "urbano", "inter"))
+  if (identical(service_type, "todos")) {
+    return(x)
+  }
+  if (!"tipo_servicio" %in% names(x)) {
+    stop(
+      "Los datos no contienen 'tipo_servicio' para aplicar el filtro.",
+      call. = FALSE
+    )
+  }
+  x[tipo_servicio == service_type]
+}
+

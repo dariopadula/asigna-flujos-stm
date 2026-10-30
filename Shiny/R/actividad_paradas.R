@@ -19,8 +19,10 @@ build_stop_activity <- function(bus, stop_index, trips) {
   passes
 }
 
-query_stop_activity <- function(data,date,hours,lines=character()) {
+query_stop_activity <- function(data,date,hours,lines=character(),
+    service_type="todos") {
   p <- filter_operational_window(data$stop_passes,date,hours,"tiempo")
+  p <- filter_service_type(p, service_type)
   if(length(lines)) p <- p[COD_LINEA %in% lines]
   result <- p[,.(subidas=sum(subidas),bajadas=sum(bajadas),buses=sum(buses)),by=COD_UBIC_P]
   merge(result,data$stops,by="COD_UBIC_P",all.x=TRUE)

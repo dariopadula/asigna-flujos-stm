@@ -39,9 +39,11 @@ aggregate_beta_positions <- function(data, passes, metric = c("personas", "buses
   result[valor > 0]
 }
 
-query_beta_flow <- function(data, date, hours, lines=character(), metric="personas") {
+query_beta_flow <- function(data, date, hours, lines=character(),
+    metric="personas", service_type="todos") {
   stopifnot(length(hours)==2,all(is.finite(hours)),hours[1]>=0,hours[2]<=24,hours[2]>hours[1],metric %in% c("personas","buses"))
   b <- filter_operational_window(data$bus, date, hours, "tiempo")
+  b <- filter_service_type(b, service_type)
   if(length(lines)) b <- b[COD_LINEA %in% lines]
   counts <- aggregate_beta_positions(data,b,metric)
   list(points=counts,recorridos=data.table::uniqueN(b$recorrido),pasadas=nrow(b),
@@ -59,7 +61,8 @@ select_street_points <- function(data, streets, directions=character()) {
 }
 
 query_street_flow <- function(data,date,hours,lines=character(),metric="personas",streets,
-    directions=character(),display_mode=c("street_only","associated"),match_mode=c("any","all")) {
+    directions=character(),display_mode=c("street_only","associated"),match_mode=c("any","all"),
+    service_type="todos") {
   display_mode <- match.arg(display_mode)
   match_mode <- match.arg(match_mode)
   stopifnot(length(streets)>0,metric %in% c("personas","buses"))
@@ -70,6 +73,7 @@ query_street_flow <- function(data,date,hours,lines=character(),metric="personas
       eligible_runs=character(),personas=0))
   }
   passes <- filter_operational_window(data$bus, date, hours, "tiempo")
+  passes <- filter_service_type(passes, service_type)
   if(length(lines)) passes <- passes[COD_LINEA %in% lines]
   passes <- prepare_query_passes(data,passes)
   if(!"street_key" %in% names(passes)) {
@@ -87,7 +91,9 @@ query_street_flow <- function(data,date,hours,lines=character(),metric="personas
   }
   required <- if(match_mode=="all") length(unique(streets)) else 1L
   eligible_runs <- passes[,.(n_streets=data.table::uniqueN(street_key)),by=recorrido][n_streets>=required,recorrido]
-  candidate_trips <- data$trips[recorrido %in% eligible_runs]
+  candidate_trips <- filter_service_type(
+    data$trips, service_type
+  )[recorrido %in% eligible_runs]
   hits <- merge(candidate_trips,
     passes[recorrido %in% eligible_runs,.(recorrido,seq_pass=seqViajeN,street_key)],
     by="recorrido",allow.cartesian=TRUE)
@@ -95,7 +101,9 @@ query_street_flow <- function(data,date,hours,lines=character(),metric="personas
   eligible_ids <- hits[,.(n_streets=data.table::uniqueN(street_key)),by=trip_id][n_streets>=required,trip_id]
   selected_trips <- candidate_trips[trip_id %in% eligible_ids]
   if(display_mode=="street_only") {
-    result <- query_beta_flow(data,date,hours,lines,metric)
+    result <- query_beta_flow(
+      data, date, hours, lines, metric, service_type
+    )
     result$points <- aggregate_beta_positions(data,passes,metric)
     result$recorridos <- data.table::uniqueN(passes$recorrido)
     result$pasadas <- nrow(passes)
@@ -109,7 +117,9 @@ query_street_flow <- function(data,date,hours,lines=character(),metric="personas
     return(result)
   }
   if(metric=="buses") {
-    full_bus <- data$bus[recorrido %in% eligible_runs]
+    full_bus <- filter_service_type(
+      data$bus, service_type
+    )[recorrido %in% eligible_runs]
     points <- aggregate_beta_positions(data,full_bus,"buses")
     return(list(points=points,recorridos=length(eligible_runs),pasadas=nrow(passes[recorrido %in% eligible_runs]),
       puntos=nrow(points),maximo=if(nrow(points)) max(points$valor) else 0,

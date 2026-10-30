@@ -6,6 +6,9 @@ flowUI <- function(id,data) {
       shiny::h4("Tu consulta"),
       shiny::selectInput(ns("date"),"Fecha de paso",choices=as.character(data$dates),selected=as.character(data$dates[1])),
       shiny::sliderInput(ns("hours"),"Franja horaria",min=0,max=24,value=c(7,10),step=.25,post=" h"),
+      shiny::radioButtons(ns("service_type"),"Tipo de servicio",
+        choices=c("Ambos"="todos","Urbano"="urbano","Interdepartamental"="inter"),
+        selected="todos"),
       shiny::selectizeInput(ns("lines"),"Líneas",choices=stats::setNames(data$lines$COD_LINEA,paste(data$lines$DESC_LINEA,"·",data$lines$COD_LINEA)),multiple=TRUE,options=list(placeholder="Todas las líneas")),
       shiny::radioButtons(ns("metric"),"Visualizar",choices=c("Personas a bordo"="personas","Pasadas de buses"="buses")),
       bslib::accordion(
@@ -23,6 +26,7 @@ flowUI <- function(id,data) {
           shiny::helpText("El horario se aplica al momento en que el bus pasa por la calle."))),
       shiny::actionButton(ns("apply"),"Actualizar mapa",class="btn-primary w-100"),
       shiny::hr(),shiny::helpText("Seleccioná filtros y actualizá el mapa. El horario incluye el inicio y excluye el final."),
+      shiny::helpText("El tipo de servicio se aplica a buses, personas y actividad de paradas."),
       shiny::helpText("Las capas Flujos y Paradas se encienden desde el control del mapa, sin recalcular. La categoría y cobertura de las paradas se eligen en Concentración de paradas."),
       shiny::helpText("Personas: suma de ocupación en cada punto. No es un conteo de personas únicas. Buses: incluye pasadas sin pasajeros."),
       shiny::helpText("Recorridos completos asociados selecciona personas que estaban a bordo al pasar por la calle; para buses selecciona los servicios que pasaron."),
@@ -49,17 +53,26 @@ flowServer <- function(id,data) {
       session,"streets",choices=street_options,selected=character(),server=TRUE
     )
     applied <- shiny::eventReactive(input$apply,{
-      shiny::req(input$date,input$hours,input$metric)
+      shiny::req(input$date,input$hours,input$metric,input$service_type)
       shiny::validate(shiny::need(input$hours[2]>input$hours[1],"Elegí una franja de duración positiva."))
       t <- proc.time()[[3]]
       query_data <- get_beta_day_data(data,input$date)
       street_display <- if(is.null(input$street_display)) "street_only" else input$street_display
       street_match <- if(is.null(input$street_match)) "any" else input$street_match
       if(length(input$streets)) {
-        result <- query_street_flow(query_data,input$date,input$hours,input$lines,input$metric,input$streets,
-          input$directions,street_display,street_match)
+        result <- query_street_flow(
+          query_data, input$date, input$hours,
+          lines=input$lines, metric=input$metric,
+          streets=input$streets, directions=input$directions,
+          display_mode=street_display, match_mode=street_match,
+          service_type=input$service_type
+        )
       } else {
-        result <- query_beta_flow(query_data,input$date,input$hours,input$lines,input$metric)
+        result <- query_beta_flow(
+          query_data, input$date, input$hours,
+          lines=input$lines, metric=input$metric,
+          service_type=input$service_type
+        )
         result$street_points <- data.table::data.table()
         result$trips <- data.table::data.table()
         result$eligible_runs <- character()
@@ -68,7 +81,10 @@ flowServer <- function(id,data) {
       result$stops <- if(length(input$streets)) {
         query_street_stop_activity(query_data,result)
       } else {
-        query_stop_activity(query_data,input$date,input$hours,input$lines)
+        query_stop_activity(
+          query_data, input$date, input$hours,
+          lines=input$lines, service_type=input$service_type
+        )
       }
       result$seconds <- proc.time()[[3]]-t
       result$metric <- input$metric
@@ -83,7 +99,11 @@ flowServer <- function(id,data) {
         paste("Recorridos completos asociados a",paste(selected_street_labels,collapse=", "))
       }
       result$street_filter <- length(input$streets)>0
-      result$caption <- sprintf("%s · %s · %02d:%02d a %02d:%02d",scope,input$date,
+      service_label <- c(
+        todos="Ambos servicios", urbano="Urbano",
+        inter="Interdepartamental"
+      )[[input$service_type]]
+      result$caption <- sprintf("%s · %s · %s · %02d:%02d a %02d:%02d",scope,service_label,input$date,
         floor(input$hours[1]),round(input$hours[1]%%1*60),floor(input$hours[2]),round(input$hours[2]%%1*60))
       result
     },ignoreNULL=FALSE)

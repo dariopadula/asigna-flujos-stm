@@ -14,6 +14,11 @@ Todo su código activo vive bajo `Shiny/`:
 
 No carga archivos de `R/` ni `Shiny/beta/` del nivel superior.
 
+En Flujo general se puede elegir `Ambos`, `Urbano` o `Interdepartamental`. El
+filtro se aplica a pasadas, personas, recorridos asociados y actividad de
+paradas. `Ambos` es el valor predeterminado y mantiene el comportamiento
+anterior.
+
 ## Abrir localmente
 
 Desde la raíz de `proyecto_flujo/`, ejecutar:
