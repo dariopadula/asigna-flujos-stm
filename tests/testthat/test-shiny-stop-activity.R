@@ -17,10 +17,18 @@ testthat::test_that("paradas compartidas conservan movimientos y buses sin dupli
 testthat::test_that("horarios y lineas filtran pasadas antes de agregar", {
   library(data.table)
   t <- as.numeric(as.POSIXct("2022-07-08",tz="America/Montevideo"))
-  d <- list(stop_passes=data.table(COD_UBIC_P=1,COD_LINEA=c("A","B","A"),tiempo=t+c(7,8,10)*3600,subidas=c(2,3,8),bajadas=0,buses=1),stops=data.table(COD_UBIC_P=1,lon=0,lat=0))
+  d <- list(stop_passes=data.table(COD_UBIC_P=1,COD_LINEA=c("A","B","A"),
+    tipo_servicio=c("urbano","inter","urbano"),
+    tiempo=t+c(7,8,10)*3600,subidas=c(2,3,8),bajadas=0,buses=1),
+    stops=data.table(COD_UBIC_P=1,lon=0,lat=0))
   r <- query_stop_activity(d,"2022-07-08",c(7,10),"A")
   testthat::expect_equal(r$subidas,2)
   testthat::expect_equal(r$buses,1)
+  inter <- query_stop_activity(
+    d, "2022-07-08", c(7,10), service_type="inter"
+  )
+  testthat::expect_equal(inter$subidas,3)
+  testthat::expect_equal(inter$buses,1)
 })
 
 testthat::test_that("concentracion elige el prefijo minimo e incluye empates", {

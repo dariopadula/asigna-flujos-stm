@@ -89,6 +89,7 @@ testthat::test_that("consulta conserva ventana semiabierta y filtro de linea", {
     bus = data.table::data.table(
       recorrido = c("A", "B", "C"), ID_punto = "p",
       COD_LINEA = c("1", "2", "1"),
+      tipo_servicio = c("urbano", "inter", "urbano"),
       tiempo = inicio + c(7, 8, 10) * 3600,
       ocupacion_personas = c(2, 0, 5), buses = 1,
       metodo_tiempo = "interpolado"
@@ -109,5 +110,34 @@ testthat::test_that("consulta conserva ventana semiabierta y filtro de linea", {
     query_beta_flow(datos, "2022-07-08", c(7, 10), "2", "buses")$points$valor,
     1
   )
+  testthat::expect_equal(
+    query_beta_flow(
+      datos, "2022-07-08", c(7, 10),
+      metric = "buses", service_type = "urbano"
+    )$points$valor,
+    1
+  )
+  testthat::expect_equal(
+    query_beta_flow(
+      datos, "2022-07-08", c(7, 10),
+      metric = "buses", service_type = "inter"
+    )$points$valor,
+    1
+  )
+  testthat::expect_equal(
+    query_beta_flow(
+      datos, "2022-07-08", c(7, 10),
+      metric = "personas", service_type = "inter"
+    )$puntos,
+    0L
+  )
+})
+
+testthat::test_that("el modulo de flujo expone el selector de servicio", {
+  codigo <- paste(readLines(
+    file.path(raiz_shiny, "modules", "flow.R"), warn = FALSE
+  ), collapse = "\n")
+  testthat::expect_match(codigo, 'ns("service_type")', fixed = TRUE)
+  testthat::expect_match(codigo, '"Interdepartamental"="inter"', fixed = TRUE)
 })
 
